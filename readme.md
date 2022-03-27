@@ -1,4 +1,5 @@
-﻿##Introduction 
+﻿See full documentation in https://github.com/luiscancillo/CommonClasses/doc/html/index.html
+ ##Introduction 
 
 RXtoRINEX project is aimed to provide tools: 
 - To collect data from GPS / GNSS receivers embedded in mobile devices or connected to them through a serial port. 
