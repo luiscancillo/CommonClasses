@@ -198,6 +198,7 @@ bool RinexData::setHdLnData(RINEXlabel rl, RINEXlabel a, const string &b) {
  * @param a meaning depends on the label identifier
  * @param b meaning depends on the label identifier
  * @param c meaning depends on the label identifier
+ * @param d identification satellite number
  * @return true if header values have been set, false otherwise
  * @throws error message when the label identifier value does not match the allowed params for this overload
  */
@@ -257,6 +258,36 @@ bool RinexData::setHdLnData(RINEXlabel rl, RINEXlabel a, const double (&b)[4], i
 
 /**setHdLnData sets data values for RINEX file header records
  *
+ * The label identifier values in this overload can be:
+ *  - TOFO: to set the current epoch time (week and TOW) as the fist observation time. Data to be included in record TIME OF FIRST OBS
+ *  - TOLO: to set the current epoch time (week and TOW) as the last observation time. Data to be included in record TIME OF LAST OBS
+ *
+ *
+ * @param rl the label identifier of the RINEX header record/line data values are for
+ * @param a is the system identifier (ignored if rl is TOLO)
+ * @return true if header values have been set, false otherwise
+ * @throws error message when the label identifier value does not match the allowed params for this overload
+ */
+bool RinexData::setHdLnData(RINEXlabel rl, char a) {
+    switch(rl) {
+        case TOFO:
+            firstObsWeek = epochWeek;
+            firstObsTOW = epochTOW;
+            obsTimeSys = a;
+            setLabelFlag(TOFO);
+            return true;
+        case TOLO:
+            lastObsWeek = epochWeek;
+            lastObsTOW = epochTOW;
+            setLabelFlag(TOLO);
+            return true;
+        default:
+            throw errorLabelMis + idTOlbl(rl) + msgSetHdLn;
+    }
+}
+
+/**setHdLnData sets data values for RINEX file header records
+ *
  * The label identifier value in this overload can be:
  *  - PRNOBS: to set in RINEX header data for record PRN / # OF OBS. Note that number of observables for each
  *            observation type (param c vector) shall be in the same order as per observable types for this system in the
@@ -275,35 +306,6 @@ bool RinexData::setHdLnData(RINEXlabel rl, char a, int b, const vector<int> &c) 
 		prnObsNum.push_back(PRNobsnum(a, b, c));
 		setLabelFlag(PRNOBS);
 		return true;
-	default:
-		throw errorLabelMis + idTOlbl(rl) + msgSetHdLn;
-	}
-}
-/**setHdLnData sets data values for RINEX file header records
- *
- * The label identifier values in this overload can be:
- *  - TOFO: to set the current epoch time (week and TOW) as the fist observation time. Data to be included in record TIME OF FIRST OBS
- *  - TOLO: to set the current epoch time (week and TOW) as the last observation time. Data to be included in record TIME OF LAST OBS
- *
- *
- * @param rl the label identifier of the RINEX header record/line data values are for
- * @param a is the system identifier (ignored if rl is TOLO)
- * @return true if header values have been set, false otherwise
- * @throws error message when the label identifier value does not match the allowed params for this overload
- */
-bool RinexData::setHdLnData(RINEXlabel rl, char a) {
-	switch(rl) {
-	case TOFO:
-        firstObsWeek = epochWeek;
-        firstObsTOW = epochTOW;
-        obsTimeSys = a;
-        setLabelFlag(TOFO);
-        return true;
-    case TOLO:
-        lastObsWeek = epochWeek;
-        lastObsTOW = epochTOW;
-        setLabelFlag(TOLO);
-        return true;
 	default:
 		throw errorLabelMis + idTOlbl(rl) + msgSetHdLn;
 	}
@@ -748,7 +750,7 @@ bool RinexData::getHdLnData(RINEXlabel rl, int &a, double &b, char &c) {
  *
  * @param rl the label identifier of the RINEX header record/line data to be extracted
  * @param a the correction type: IONC_GAL, IONC_GPSA, IONC_GPSB, IONC_QZSA, IONC_QZSB, IONC_BDSA, IONC_BDSB, IONC_IRNA, IONC_IRNB or NOLABEL
- * @param b,the iono parameters or the time coeficients and reference
+ * @param b the iono parameters or the time coeficients and reference
  * @param c the time mark for iono or UTC source id for time corrections
  * @param d the satellite number being source of data
  * @param index the position in the sequence of iono corrections records to get
@@ -756,7 +758,6 @@ bool RinexData::getHdLnData(RINEXlabel rl, int &a, double &b, char &c) {
  * @throws error message when the label identifier value does not match the allowed params for this overload
  */
 bool  RinexData::getHdLnData(RINEXlabel rl, RINEXlabel &a, double (&b)[4], int &c, int &d, unsigned int index) {
-//bool RinexData::getHdLnData(RINEXlabel rl, string &a, vector <double> &b, unsigned int index) {
     int order = -1;
     if (!getLabelFlag(rl)) return false;
     //convert V2 labels to equivalent V3 ones
@@ -802,6 +803,7 @@ bool  RinexData::getHdLnData(RINEXlabel rl, RINEXlabel &a, double (&b)[4], int &
             throw errorLabelMis + idTOlbl(rl) + msgSetHdLn;
     }
 }
+
 /**getHdLnData gets data values related to line header records previously stored in the class object
  *
  * The label identifier values in this overload can be:
@@ -945,12 +947,14 @@ bool RinexData::getHdLnData(RINEXlabel rl, char &a, string &b, string &c, unsign
 /**getHdLnData gets data values related to line header records previously stored in the class object
  *
  * The label identifier values in this overload can be:
- * - PHSH to get data from the given phshCorrection from "SYS / # / OBS TYPES" records
+ * - PHSH (PHASE SHIFTS) to get data from the given phshCorrection from "SYS / # / OBS TYPES" records
  * <p> Values returned in parameters are undefined when method returns false.
  *
  * @param rl the label identifier of the RINEX header record/line data to be extracted
  * @param a the system identification: G (GPS), R (GLONASS), S (SBAS), E (Galileo)
  * @param b a vector with identifiers for each observable type (C1C, L1C, D1C, S1C...) contained in epoch data for this system
+ * @param c when PHSH, the Correction applied (cycles)
+ * @param d when PHSH, a vector with the list of satellites involved in the correction
  * @param index the position in the sequence of "# / TYPES OF OBSERV" or "SYS / # / OBS TYPES" records to get
  * @return true if header values have been got, false otherwise
  * @throws error message when the label identifier value does not match the allowed params for this overload
@@ -1214,6 +1218,7 @@ bool RinexData::getHdLnData(RINEXlabel rl, int &a, int &b, vector <string> &c, u
  * @param c meaning depends on the label identifier
  * @param d meaning depends on the label identifier
  * @param e meaning depends on the label identifier
+ * @param index the position in the sequence of records the one to be extracted
  * @return true if header values have been set, false otherwise
  * @throws error message when the label identifier value does not match the allowed params for this overload
  */
@@ -1328,6 +1333,7 @@ bool RinexData::getHdLnData(RINEXlabel rl, string &a, string &b, string &c) {
  * @param rl the label identifier of the RINEX header record/line data to be extracted
  * @param a meaning depends on the label identifier
  * @param b meaning depends on the label identifier
+ * @param index the position in the sequence of records the one to be extracted
  * @return true if header values have been got, false otherwise
  * @throws error message when the label identifier value does not match the allowed params for this overload
  */
@@ -1503,7 +1509,7 @@ bool RinexData::saveObsData(char sys, int sat, string obsTp, double value, int l
  * @param value the value of the measurement
  * @param lli the loss of lock indicator. See RINEX V2.10
  * @param strg the signal strength. See RINEX V3.04
- * @param index the position in the sequence of opoch observables to extract
+ * @param index the position in the sequence of epoch observables to extract
  * @return true if data for the given index exist, false otherwise
  */
 bool RinexData::getObsData(char &sys, int &sat, string &obsTp, double &value, int &lli, int &strg, unsigned int index) {

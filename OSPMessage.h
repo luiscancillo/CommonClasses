@@ -1,4 +1,4 @@
-/** @file OSPmessage.h
+/** @file OSPMessage.h
  * Contains the OSPMessage class definition used to acquire data from OSP messages, taking into account each data type.
  *
  *Copyright 2015, 2021 by Francisco Cancillo & Luis Cancillo

@@ -1,4 +1,4 @@
-/** @file OSPmessage.cpp
+/** @file OSPMessage.cpp
  * Contains the implementation of the OSPmessage class.
  */
 
