@@ -1,4 +1,5 @@
-﻿See full documentation in https://github.com/luiscancillo/CommonClasses/doc/html/index.html
+﻿See full documentation in https://github.com/luiscancillo/CommonClasses/tree/master/doc/html/index.html
+ 
  ##Introduction 
 
 RXtoRINEX project is aimed to provide tools: 
